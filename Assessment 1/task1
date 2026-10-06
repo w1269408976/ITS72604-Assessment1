@@ -1,0 +1,89 @@
+BEGIN
+
+    SET continue_program = "Y"
+
+    WHILE continue_program = "Y"
+        // User Input
+        INPUT user_id, vehicle_number, member_type
+        INPUT charger_type, hours_charged
+        INPUT first_time_user, eco_pass
+        INPUT peak_hour, idle_parking, lost_rfid
+
+        SET discount = 0
+        SET surcharge = 0
+        SET eco_discount = 0
+
+        // Charging fee
+        IF charger_type = "AC" THEN
+            IF hours_charged <= 2 THEN
+                gross_fee = hours_charged * 4
+            ELSEIF hours_charged <= 4 THEN
+                gross_fee = hours_charged * 6
+            ELSEIF hours_charged <= 6 THEN
+                gross_fee = hours_charged * 8
+            ELSE
+                gross_fee = hours_charged * 12
+                IF gross_fee > 80 THEN
+                    gross_fee = 80
+                END IF
+            END IF
+
+        ELSEIF charger_type = "DC" THEN
+            IF hours_charged <= 2 THEN
+                gross_fee = hours_charged * 10
+            ELSEIF hours_charged <= 4 THEN
+                gross_fee = hours_charged * 15
+            ELSEIF hours_charged <= 6 THEN
+                gross_fee = hours_charged * 20
+            ELSE
+                gross_fee = hours_charged * 30
+                IF gross_fee > 150 THEN
+                    gross_fee = 150
+                END IF
+            END IF
+        END IF
+
+        // Discount and Waiver Evaluation
+        IF first_time_user = "Y" THEN
+            discount = gross_fee
+        ELSEIF member_type = "Staff" THEN
+            discount = gross_fee * 0.50
+        ELSEIF member_type = "Student" AND charger_type = "AC" THEN
+            discount = gross_fee * 0.25
+        END IF
+
+        // Surcharge & Fee Addition
+        IF peak_hour = "Y" THEN
+            surcharge = surcharge + 5
+        END IF
+
+        IF idle_parking = "Y" THEN
+            surcharge = surcharge + 15
+        END IF
+
+        IF lost_rfid = "Y" THEN
+            surcharge = surcharge + 30
+        END IF
+
+        // Eco-Pass
+        IF eco_pass = "Y" THEN
+            eco_discount = 2
+        END IF
+
+        net_payable = gross_fee - discount + surcharge - eco_discount
+
+        IF net_payable < 0 THEN
+            net_payable = 0
+        END IF
+
+        // Output Display
+        OUTPUT user_id, vehicle_number
+        OUTPUT gross_fee, discount
+        OUTPUT surcharge, eco_discount
+        OUTPUT net_payable
+
+        INPUT continue_program
+
+    END WHILE
+
+END
